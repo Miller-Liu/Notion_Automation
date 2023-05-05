@@ -2,8 +2,6 @@
 import datetime
 import json
 import requests
-import pytz
-import time
 import os
 import sys
 
@@ -13,7 +11,7 @@ import sys
 # print(path)
 # file = open(path)
 
-# When running on pycharm: file = open("SECRET.json")
+# When running on pycharm
 file = open("SECRET.json")
 data = json.load(file)
 
@@ -22,6 +20,9 @@ TOKEN = data["id"]
 DATABASE_IDs = data["database"]
 Calendar_ID = DATABASE_IDs["calendar"]
 TIMELINE_ID = DATABASE_IDs["timeline"]
+TO_DO_ID = DATABASE_IDs["to-do"]
+TASK_LIST_ID = DATABASE_IDs["to-do-database"]
+TO_DO_TOMORROW_ID = DATABASE_IDs["to-do-tomorrow"]
 # print(data)
 
 file.close()
@@ -135,24 +136,206 @@ def add_events_to_timeline_view():
             if calendar_page.name == timeline_page.name and calendar_page.date == timeline_page.date:
                 exist = True
         if not exist:
-            print(add_event_to_timeline_view({"Date": {"date": {"start": calendar_page.date[0], "end": calendar_page.date[1]}}, "Description": {"rich_text": calendar_page.description}, "Link": {"url": calendar_page.link}, "Name": {"title": [{"text": {"content": calendar_page.name}, "plain_text": calendar_page.name}]}}))
+            print(add_event_to_timeline_view(
+                {"Date": {"date": {"start": calendar_page.date[0], "end": calendar_page.date[1]}},
+                 "Description": {"rich_text": calendar_page.description}, "Link": {"url": calendar_page.link},
+                 "Name": {"title": [{"text": {"content": calendar_page.name}, "plain_text": calendar_page.name}]}}))
         if exist:
             print(f"{calendar_page.name} already exists")
 
 
+class ToDoList:
+    def __init__(self, name, block_id):
+        self.name = name
+        self.to_do = []
+        self.ids = []
+        self.block_id = block_id
 
-# json_object = json.dumps(get_timeline_database_items_today(), indent=4)
+    def process_from_database(self, page_properties):
+        for item in page_properties:
+            if len(item["to_do"]["text"]) == 1:
+                self.to_do.append([item["to_do"]["text"][0]["plain_text"], item["to_do"]["checked"]])
+                self.ids.append(item["id"])
+
+    def __str__(self):
+        return f"Name: {self.name}\nTo-do: {self.to_do}\nIDs: {self.ids}\n"
+
+
+def get_to_do_list():
+    url = f"https://api.notion.com/v1/blocks/{TO_DO_ID}"
+    response = requests.get(url, headers=headers)
+    response = jsonify(response.text)
+    to_do_list = ToDoList(response["heading_2"]["text"][0]["plain_text"], response["id"])
+    url = f"https://api.notion.com/v1/blocks/{TO_DO_ID}/children"
+    response = requests.get(url, headers=headers)
+    response = jsonify(response.text)
+    to_do_list.process_from_database(response["results"])
+    return to_do_list
+
+
+def get_to_do_list_tomorrow():
+    url = f"https://api.notion.com/v1/blocks/{TO_DO_TOMORROW_ID}"
+    response = requests.get(url, headers=headers)
+    response = jsonify(response.text)
+    to_do_list = ToDoList(response["heading_2"]["text"][0]["plain_text"], response["id"])
+    url = f"https://api.notion.com/v1/blocks/{TO_DO_TOMORROW_ID}/children"
+    response = requests.get(url, headers=headers)
+    response = jsonify(response.text)
+    to_do_list.process_from_database(response["results"])
+    return to_do_list
+
+
+def add_to_do_list_to_timeline():
+    to_do_list = get_to_do_list()
+    timeline_pages = get_timeline_database_items_today()
+    for to_do_item in to_do_list.to_do:
+        exist = False
+        for timeline_page in timeline_pages:
+            if to_do_item[0] == timeline_page.name:
+                exist = True
+        if not exist:
+            today = datetime.date.today()
+            begin_time = datetime.time(0, 0, 0).strftime('%H:%M:%S')
+            begin_time = f"{today.strftime('%Y-%m-%d')}T{begin_time}"
+            begin_time = datetime.datetime.strptime(begin_time, '%Y-%m-%dT%H:%M:%S').astimezone().isoformat()
+            end_time = datetime.time(23, 59, 59).strftime('%H:%M:%S')
+            end_time = f"{today.strftime('%Y-%m-%d')}T{end_time}"
+            end_time = datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S').astimezone().isoformat()
+            print(add_event_to_timeline_view(
+                {"Date": {"date": {"start": begin_time, "end": end_time}},
+                 "Name": {"title": [{"text": {"content": to_do_item[0]}, "plain_text": to_do_item[0]}]}}))
+        if exist:
+            print(f"{to_do_item[0]} already exists")
+
+
+class Task:
+    def __init__(self, name, status, id):
+        self.name = name
+        self.status = status
+        self.id = id
+
+    def __str__(self):
+        return f"Name: {self.name}\nStatus: {self.status}\n"
+
+
+def get_task_list():
+    url = f"https://api.notion.com/v1/databases/{TASK_LIST_ID}/query"
+    response = requests.post(url, headers=headers)
+    response = jsonify(response.text)
+    pages = []
+    for item in response["results"]:
+        if len(item["properties"]["Name"]["title"]) == 1:
+            pages.append(Task(item["properties"]["Name"]["title"][0]["plain_text"],
+                              item["properties"]["Status"]["select"]["name"],
+                              item["id"]))
+    return pages
+
+
+def add_event_to_task_list(event_data):
+    url = "https://api.notion.com/v1/pages"
+    payload = {"parent": {"database_id": TASK_LIST_ID}, "properties": event_data}
+    response = requests.post(url, json=payload, headers=headers)
+    response = jsonify(response.text)
+    return response
+
+
+def add_event_to_to_do_list(event_data):
+    url = f"https://api.notion.com/v1/blocks/{TO_DO_ID}/children"
+    payload = {"children": [event_data]}
+    response = requests.patch(url, json=payload, headers=headers)
+    response = jsonify(response.text)
+    return response
+
+
+def add_event_to_to_do_list_tomorrow(event_data):
+    url = f"https://api.notion.com/v1/blocks/{TO_DO_TOMORROW_ID}/children"
+    payload = {"children": [event_data]}
+    response = requests.patch(url, json=payload, headers=headers)
+    response = jsonify(response.text)
+    return response
+
+
+def sync_to_do_list_and_task_list():
+    to_do_list = get_to_do_list()
+    task_list = get_task_list()
+    to_do_list = [item[0] for item in to_do_list.to_do]
+    task_list = [item.name for item in task_list]
+    temp_boolean = True
+    for to_do_item in to_do_list:
+        if to_do_item not in task_list:
+            temp_boolean = False
+            print(add_event_to_task_list(
+                {"Status": {"select": {"name": "To Do"}},
+                 "Name": {"title": [{"text": {"content": to_do_item}, "plain_text": to_do_item}]}}))
+    if temp_boolean:
+        print("All items in to-do list is in task list")
+    temp_boolean = True
+    for task_item in task_list:
+        if task_item not in to_do_list:
+            temp_boolean = False
+            print(add_event_to_to_do_list(
+                {"to_do": {"text": [{"text": {"content": task_item}, "plain_text": task_item}]}}))
+    if temp_boolean:
+        print("All items in task-list is in to-do list")
+
+
+def daily_reset():
+    to_do_list = get_to_do_list()
+    today = datetime.date.today().strftime('%m/%d')
+    if to_do_list.name[7:-2] == today:
+        print("To do list is up to date")
+    else:
+        for item in to_do_list.ids:
+            url = f"https://api.notion.com/v1/blocks/{item}"
+            response = requests.delete(url, headers=headers)
+            print(response.text)
+        url = f"https://api.notion.com/v1/blocks/{to_do_list.block_id}"
+        response = requests.patch(url, json={"heading_2": {
+            "rich_text": [{"text": {"content": f"To Do ({today}):"}, "plain_text": f"To Do ({today}):"}]}},
+                                  headers=headers)
+        print(response.text)
+        task_list = get_task_list()
+        for item in task_list:
+            url = f"https://api.notion.com/v1/pages/{item.id}"
+            response = requests.patch(url, json={"archived": True}, headers=headers)
+            print(response.text)
+        to_do_list_tomorrow = get_to_do_list_tomorrow()
+        if to_do_list_tomorrow.name[15:-2] == today:
+            for event in to_do_list_tomorrow.to_do:
+                print(add_event_to_to_do_list(
+                    {"to_do": {"text": [{"text": {"content": event[0]}, "plain_text": event[0]}]}}))
+        else:
+            print(add_event_to_to_do_list({"to_do": {"text": []}}))
+        url = f"https://api.notion.com/v1/blocks/{to_do_list_tomorrow.block_id}"
+        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+        tomorrow = tomorrow.strftime('%m/%d')
+        response = requests.patch(url, json={"heading_2": {
+            "rich_text": [{"text": {"content": f"Planned To Do ({tomorrow}):"},
+                           "plain_text": f"Planned To Do ({tomorrow}):"}]}}, headers=headers)
+        print(response.text)
+        for item in to_do_list_tomorrow.ids:
+            url = f"https://api.notion.com/v1/blocks/{item}"
+            response = requests.delete(url, headers=headers)
+            print(response.text)
+        print(add_event_to_to_do_list_tomorrow({"to_do": {"text": []}}))
+        add_events_to_timeline_view()
+        add_to_do_list_to_timeline()
+        sync_to_do_list_and_task_list()
+
+
+def sync_all():
+    add_events_to_timeline_view()
+    sync_to_do_list_and_task_list()
+    add_to_do_list_to_timeline()
+
+
+# json_object = json.dumps(get_to_do_list(), indent=4)
 
 # # Writing to sample.json
 # with open("Out.json", "w") as outfile:
 #     outfile.write(json_object)
 
+daily_reset()
 
-# TZ_LA = pytz.timezone('America/Los_Angeles')
-# a = datetime.datetime.now(TZ_LA)
-# print(a)
-# print(add_event_to_timeline_view({"Date": {"date": {"start": a.isoformat(), "end": None}}}))
-
-add_events_to_timeline_view()
 
 # input()
