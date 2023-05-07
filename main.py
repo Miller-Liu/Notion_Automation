@@ -4,6 +4,7 @@ import json
 import requests
 import os
 import sys
+from google_calendar import get_google_calendar_events
 
 # For bundling with pyinstaller into an exe
 # bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
@@ -18,7 +19,7 @@ data = json.load(file)
 # get values from SECRET.json
 TOKEN = data["id"]
 DATABASE_IDs = data["database"]
-Calendar_ID = DATABASE_IDs["calendar"]
+CALENDAR_ID = DATABASE_IDs["calendar"]
 TIMELINE_ID = DATABASE_IDs["timeline"]
 TO_DO_ID = DATABASE_IDs["to-do"]
 TASK_LIST_ID = DATABASE_IDs["to-do-database"]
@@ -50,7 +51,7 @@ class CalendarDatabasePage:
         self.link = page_properties["Link"]["url"]
 
     def __str__(self):
-        return f"Name: {self.name}\nID: {self.id}]nDate: {self.date}\n" \
+        return f"Name: {self.name}\nID: {self.id}\nDate: {self.date}\n" \
                f"Description: {self.description}\nLink: {self.link}\n"
 
 
@@ -85,7 +86,7 @@ def get_database_object(database_id):
 
 
 def get_calendar_database_items_today():
-    url = f"https://api.notion.com/v1/databases/{Calendar_ID}/query"
+    url = f"https://api.notion.com/v1/databases/{CALENDAR_ID}/query"
     payload = {"filter": {"property": "Date", "date": {"equals": f"{datetime.date.today()}"}},
                "sorts": [{"property": "Time", "direction": "ascending"}]}
     response = requests.post(url, json=payload, headers=headers)
@@ -95,7 +96,7 @@ def get_calendar_database_items_today():
         if len(item["properties"]["Name"]["title"]) == 1:
             pages.append(CalendarDatabasePage(item["properties"]["Name"]["title"][0]["plain_text"], item["id"]))
             pages[-1].process_from_database(item["properties"])
-    return pages
+    return response
 
 
 def get_timeline_database_items_today():
@@ -323,19 +324,57 @@ def daily_reset():
         sync_to_do_list_and_task_list()
 
 
+def sync_google_calendar():
+    today = datetime.datetime.today()
+    begin_date = today.replace(day=1)
+    end_date = begin_date + datetime.timedelta(days=32)
+    end_date = end_date.replace(day=1)
+    begin_date = begin_date.strftime('%Y-%m-%d')
+    end_date = end_date.strftime('%Y-%m-%d')
+    url = f"https://api.notion.com/v1/databases/{CALENDAR_ID}/query"
+    payload = {"filter": {"property": "Date", "date": {"on-or-after": f"{begin_date}", "before": f"{end_date}"}},
+               "sorts": [{"property": "Time", "direction": "ascending"}]}
+    response = requests.post(url, json=payload, headers=headers)
+    response = jsonify(response.text)
+    pages = []
+    for item in response["results"]:
+        if len(item["properties"]["Name"]["title"]) == 1:
+            pages.append((item["properties"]["Name"]["title"][0]["plain_text"], item["properties"]["Time"]["date"]["start"][:10]))
+    print(pages)
+    calendar = get_google_calendar_events()
+    for calendar_event in calendar:
+        temp = True
+        for event in pages:
+            if calendar_event[0] == event[0] and calendar_event[1][:10] == calendar_event[2][:10] == event[1]:
+                temp = False
+        if not temp:
+            print(f"{calendar_event[0]} is already in calendar")
+        else:
+            print(f"{calendar_event[0]} added to calendar")
+            url = "https://api.notion.com/v1/pages"
+            payload = {"parent": {"database_id": CALENDAR_ID},
+                       "properties": {"Date": {"date": {"start": calendar_event[1][:10]}},
+                                      "Time": {"date": {"start": calendar_event[1],
+                                                        "end": calendar_event[2]}}, "Name": {
+                               "title": [{"text": {"content": calendar_event[0]}, "plain_text": calendar_event[0]}]}}}
+            response = requests.post(url, json=payload, headers=headers)
+            response = jsonify(response.text)
+    return response
+
+
 def sync_all():
     add_events_to_timeline_view()
     sync_to_do_list_and_task_list()
     add_to_do_list_to_timeline()
 
 
-# json_object = json.dumps(get_to_do_list(), indent=4)
-
+# json_object = json.dumps(get_calendar_database_items_today(), indent=4)
+#
 # # Writing to sample.json
 # with open("Out.json", "w") as outfile:
 #     outfile.write(json_object)
 
-daily_reset()
-
+# daily_reset()
+sync_google_calendar()
 
 # input()
