@@ -24,7 +24,6 @@ TIMELINE_ID = DATABASE_IDs["timeline"]
 TO_DO_ID = DATABASE_IDs["to-do"]
 TASK_LIST_ID = DATABASE_IDs["to-do-database"]
 TO_DO_TOMORROW_ID = DATABASE_IDs["to-do-tomorrow"]
-# print(data)
 
 file.close()
 
@@ -79,6 +78,16 @@ def jsonify(text):
     return json.loads(text)
 
 
+def process_result(result):
+    if "object" in result.keys:
+        if result["object"] != "error":
+            print(f"ERROR: {result}")
+        else:
+            print(f"{result['object']} added successfully")
+    else:
+        print(f"ERROR: {result}")
+
+
 def get_database_object(database_id):
     url = f"https://api.notion.com/v1/databases/{database_id}"
     response = requests.get(url, headers=headers)
@@ -108,7 +117,8 @@ def get_timeline_database_items_today():
     begin_time = datetime.datetime.strptime(begin_time, '%Y-%m-%dT%H:%M:%S').astimezone().isoformat()
     end_time = f"{tomorrow.strftime('%Y-%m-%d')}T{zero_time}"
     end_time = datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S').astimezone().isoformat()
-    payload = {"filter": {"property": "Date", "date": {"after": f"{begin_time}", "before": f"{end_time}"}},
+    payload = {"filter": {"and": [{"property": "Date", "date": {"after": f"{begin_time}"}},
+                                  {"property": "Date", "date": {"before": f"{end_time}"}}]},
                "sorts": [{"property": "Date", "direction": "ascending"}]}
     response = requests.post(url, json=payload, headers=headers)
     response = jsonify(response.text)
@@ -137,7 +147,7 @@ def add_events_to_timeline_view():
             if calendar_page.name == timeline_page.name and calendar_page.date == timeline_page.date:
                 exist = True
         if not exist:
-            print(add_event_to_timeline_view(
+            process_result(add_event_to_timeline_view(
                 {"Date": {"date": {"start": calendar_page.date[0], "end": calendar_page.date[1]}},
                  "Description": {"rich_text": calendar_page.description}, "Link": {"url": calendar_page.link},
                  "Name": {"title": [{"text": {"content": calendar_page.name}, "plain_text": calendar_page.name}]}}))
@@ -202,7 +212,7 @@ def add_to_do_list_to_timeline():
             end_time = datetime.time(23, 59, 59).strftime('%H:%M:%S')
             end_time = f"{today.strftime('%Y-%m-%d')}T{end_time}"
             end_time = datetime.datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S').astimezone().isoformat()
-            print(add_event_to_timeline_view(
+            process_result(add_event_to_timeline_view(
                 {"Date": {"date": {"start": begin_time, "end": end_time}},
                  "Name": {"title": [{"text": {"content": to_do_item[0]}, "plain_text": to_do_item[0]}]}}))
         if exist:
@@ -265,7 +275,7 @@ def sync_to_do_list_and_task_list():
     for to_do_item in to_do_list:
         if to_do_item not in task_list:
             temp_boolean = False
-            print(add_event_to_task_list(
+            process_result(add_event_to_task_list(
                 {"Status": {"select": {"name": "To Do"}},
                  "Name": {"title": [{"text": {"content": to_do_item}, "plain_text": to_do_item}]}}))
     if temp_boolean:
@@ -274,7 +284,7 @@ def sync_to_do_list_and_task_list():
     for task_item in task_list:
         if task_item not in to_do_list:
             temp_boolean = False
-            print(add_event_to_to_do_list(
+            process_result(add_event_to_to_do_list(
                 {"to_do": {"text": [{"text": {"content": task_item}, "plain_text": task_item}]}}))
     if temp_boolean:
         print("All items in task-list is in to-do list")
@@ -289,36 +299,36 @@ def daily_reset():
         for item in to_do_list.ids:
             url = f"https://api.notion.com/v1/blocks/{item}"
             response = requests.delete(url, headers=headers)
-            print(response.text)
+            # print(response.text)
         url = f"https://api.notion.com/v1/blocks/{to_do_list.block_id}"
         response = requests.patch(url, json={"heading_2": {
             "rich_text": [{"text": {"content": f"To Do ({today}):"}, "plain_text": f"To Do ({today}):"}]}},
                                   headers=headers)
-        print(response.text)
+        # print(response.text)
         task_list = get_task_list()
         for item in task_list:
             url = f"https://api.notion.com/v1/pages/{item.id}"
             response = requests.patch(url, json={"archived": True}, headers=headers)
-            print(response.text)
+            # print(response.text)
         to_do_list_tomorrow = get_to_do_list_tomorrow()
         if to_do_list_tomorrow.name[15:-2] == today:
             for event in to_do_list_tomorrow.to_do:
-                print(add_event_to_to_do_list(
+                process_result(add_event_to_to_do_list(
                     {"to_do": {"text": [{"text": {"content": event[0]}, "plain_text": event[0]}]}}))
         else:
-            print(add_event_to_to_do_list({"to_do": {"text": []}}))
+            process_result(add_event_to_to_do_list({"to_do": {"text": []}}))
         url = f"https://api.notion.com/v1/blocks/{to_do_list_tomorrow.block_id}"
         tomorrow = datetime.date.today() + datetime.timedelta(days=1)
         tomorrow = tomorrow.strftime('%m/%d')
         response = requests.patch(url, json={"heading_2": {
             "rich_text": [{"text": {"content": f"Planned To Do ({tomorrow}):"},
                            "plain_text": f"Planned To Do ({tomorrow}):"}]}}, headers=headers)
-        print(response.text)
+        # print(response.text)
         for item in to_do_list_tomorrow.ids:
             url = f"https://api.notion.com/v1/blocks/{item}"
             response = requests.delete(url, headers=headers)
-            print(response.text)
-        print(add_event_to_to_do_list_tomorrow({"to_do": {"text": []}}))
+            # print(response.text)
+        process_result(add_event_to_to_do_list_tomorrow({"to_do": {"text": []}}))
         add_events_to_timeline_view()
         add_to_do_list_to_timeline()
         sync_to_do_list_and_task_list()
@@ -332,14 +342,18 @@ def sync_google_calendar():
     begin_date = begin_date.strftime('%Y-%m-%d')
     end_date = end_date.strftime('%Y-%m-%d')
     url = f"https://api.notion.com/v1/databases/{CALENDAR_ID}/query"
-    payload = {"filter": {"property": "Date", "date": {"on-or-after": f"{begin_date}", "before": f"{end_date}"}},
+    print(begin_date, end_date)
+    payload = {"filter": {"and": [{"property": "Date", "date": {"on_or_after": f"{begin_date}"}},
+                                  {"property": "Date", "date": {"before": f"{end_date}"}}]},
                "sorts": [{"property": "Time", "direction": "ascending"}]}
     response = requests.post(url, json=payload, headers=headers)
     response = jsonify(response.text)
+    return response
     pages = []
     for item in response["results"]:
         if len(item["properties"]["Name"]["title"]) == 1:
-            pages.append((item["properties"]["Name"]["title"][0]["plain_text"], item["properties"]["Time"]["date"]["start"][:10]))
+            pages.append((item["properties"]["Name"]["title"][0]["plain_text"],
+                          item["properties"]["Time"]["date"]["start"][:10]))
     print(pages)
     calendar = get_google_calendar_events()
     for calendar_event in calendar:
@@ -368,13 +382,32 @@ def sync_all():
     add_to_do_list_to_timeline()
 
 
-# json_object = json.dumps(get_calendar_database_items_today(), indent=4)
+def controller():
+    controller_dict = {1: sync_google_calendar, 2: daily_reset, 3: add_events_to_timeline_view,
+                       4: sync_to_do_list_and_task_list, 5: add_to_do_list_to_timeline}
+    while True:
+        print(
+            '''
+Below are the shortcuts corresponding with each action:
+    Sync google calendar with calendar view: 1
+    Daily update: 2
+    Add calendar events to timeline events: 3
+    Sync to do lists: 4
+    Add to do items to timeline view: 5
+            '''
+        )
+        choice = input("Please enter your choice: ")
+        controller_dict[int(choice)]()
+
+
+# json_object = json.dumps(sync_google_calendar(), indent=4)
 #
 # # Writing to sample.json
 # with open("Out.json", "w") as outfile:
 #     outfile.write(json_object)
 
 # daily_reset()
-sync_google_calendar()
+# sync_google_calendar()
+# controller()
 
 # input()

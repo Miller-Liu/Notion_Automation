@@ -9,14 +9,10 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
 
 def get_google_calendar_events():
-    """Shows basic usage of the Google Calendar API.
-    Prints the start and name of the next 10 events on the user's calendar.
-    """
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -39,9 +35,11 @@ def get_google_calendar_events():
         service = build('calendar', 'v3', credentials=creds)
         api = "AIzaSyB_kjS06TcX6mSHvEbCwhljUQLiaf0HkF8"
         # get list of calendars
-        # calendar_list = service.calendarList().list().execute()
-        # for calendar_list_entry in calendar_list['items']:
-        #     print("calendar", calendar_list_entry['summary'], calendar_list_entry['id'])
+        '''
+        calendar_list = service.calendarList().list().execute()
+        for calendar_list_entry in calendar_list['items']:
+            print("calendar", calendar_list_entry['summary'], calendar_list_entry['id'])
+        '''
         today = datetime.datetime.today()
         begin_date = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         end_date = begin_date + datetime.timedelta(days=32)
