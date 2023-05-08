@@ -396,6 +396,7 @@ Below are the shortcuts corresponding with each action:
     Add to do items to timeline view: 5
             '''
         )
+
         choice = input("Please enter your choice: ")
         controller_dict[int(choice)]()
 
