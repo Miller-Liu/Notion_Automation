@@ -413,7 +413,6 @@ Below are the shortcuts corresponding with each action:
 # daily_reset()
 # sync_google_calendar()
 
-
 # def activated():
 #     win = pyautogui.getWindowsWithTitle('Calendar')[0]
 #     win.maximize()
