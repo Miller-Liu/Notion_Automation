@@ -4,6 +4,7 @@ import json
 import requests
 import os
 import sys
+import keyboard
 from google_calendar import get_google_calendar_events
 
 # For bundling with pyinstaller into an exe
@@ -79,11 +80,12 @@ def jsonify(text):
 
 
 def process_result(result):
-    if "object" in result.keys:
+    print(result)
+    if "object" in result.keys():
         if result["object"] != "error":
-            print(f"ERROR: {result}")
-        else:
             print(f"{result['object']} added successfully")
+        else:
+            print(f"ERROR: {result}")
     else:
         print(f"ERROR: {result}")
 
@@ -105,7 +107,7 @@ def get_calendar_database_items_today():
         if len(item["properties"]["Name"]["title"]) == 1:
             pages.append(CalendarDatabasePage(item["properties"]["Name"]["title"][0]["plain_text"], item["id"]))
             pages[-1].process_from_database(item["properties"])
-    return response
+    return pages
 
 
 def get_timeline_database_items_today():
@@ -348,7 +350,6 @@ def sync_google_calendar():
                "sorts": [{"property": "Time", "direction": "ascending"}]}
     response = requests.post(url, json=payload, headers=headers)
     response = jsonify(response.text)
-    return response
     pages = []
     for item in response["results"]:
         if len(item["properties"]["Name"]["title"]) == 1:
@@ -409,6 +410,6 @@ Below are the shortcuts corresponding with each action:
 
 # daily_reset()
 # sync_google_calendar()
-# controller()
+controller()
 
 # input()
