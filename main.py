@@ -4,6 +4,8 @@ import json
 import requests
 import os
 import sys
+import pyautogui
+import pywinauto
 import keyboard
 from google_calendar import get_google_calendar_events
 
@@ -386,20 +388,20 @@ def sync_all():
 def controller():
     controller_dict = {1: sync_google_calendar, 2: daily_reset, 3: add_events_to_timeline_view,
                        4: sync_to_do_list_and_task_list, 5: add_to_do_list_to_timeline}
-    while True:
-        print(
-            '''
+    print(
+        '''
 Below are the shortcuts corresponding with each action:
     Sync google calendar with calendar view: 1
     Daily update: 2
     Add calendar events to timeline events: 3
     Sync to do lists: 4
     Add to do items to timeline view: 5
-            '''
-        )
+        '''
+    )
 
-        choice = input("Please enter your choice: ")
-        controller_dict[int(choice)]()
+    choice = int(input("Please enter your choice: "))
+    if choice in controller_dict.keys():
+        controller_dict[choice]()
 
 
 # json_object = json.dumps(sync_google_calendar(), indent=4)
@@ -410,6 +412,13 @@ Below are the shortcuts corresponding with each action:
 
 # daily_reset()
 # sync_google_calendar()
-controller()
 
-# input()
+
+# def activated():
+#     win = pyautogui.getWindowsWithTitle('Calendar')[0]
+#     win.maximize()
+#     controller()
+#     win.minimize()
+#
+# keyboard.add_hotkey("ctrl+shift+alt+space", activated)
+# keyboard.wait()
