@@ -5,18 +5,17 @@ import requests
 import os
 import sys
 import pyautogui
-import pywinauto
 import keyboard
 from google_calendar import get_google_calendar_events
 
 # For bundling with pyinstaller into an exe
-# bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
-# path = os.path.abspath(os.path.join(bundle_dir, 'SECRET.json'))
-# print(path)
-# file = open(path)
+bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
+path = os.path.abspath(os.path.join(bundle_dir, 'SECRET.json'))
+file = open(path)
 
 # When running on pycharm
-file = open("SECRET.json")
+# file = open("SECRET.json")
+
 data = json.load(file)
 
 # get values from SECRET.json
@@ -386,8 +385,8 @@ def sync_all():
 
 
 def controller():
-    controller_dict = {1: sync_google_calendar, 2: daily_reset, 3: add_events_to_timeline_view,
-                       4: sync_to_do_list_and_task_list, 5: add_to_do_list_to_timeline}
+    controller_dict = {"1": sync_google_calendar, "2": daily_reset, "3": add_events_to_timeline_view,
+                       "4": sync_to_do_list_and_task_list, "5": add_to_do_list_to_timeline}
     print(
         '''
 Below are the shortcuts corresponding with each action:
@@ -399,25 +398,22 @@ Below are the shortcuts corresponding with each action:
         '''
     )
 
-    choice = int(input("Please enter your choice: "))
+    choice = input("Please enter your choice: ")
     if choice in controller_dict.keys():
         controller_dict[choice]()
+    else:
+        if choice != "q":
+            print("Invalid entry")
+            controller()
 
 
-# json_object = json.dumps(sync_google_calendar(), indent=4)
-#
-# # Writing to sample.json
-# with open("Out.json", "w") as outfile:
-#     outfile.write(json_object)
+def activated():
+    win = pyautogui.getWindowsWithTitle('Notion Automation App')[0]
+    win.maximize()
+    controller()
+    print("finished")
+    win.minimize()
 
-# daily_reset()
-# sync_google_calendar()
 
-# def activated():
-#     win = pyautogui.getWindowsWithTitle('Calendar')[0]
-#     win.maximize()
-#     controller()
-#     win.minimize()
-#
-# keyboard.add_hotkey("ctrl+shift+alt+space", activated)
-# keyboard.wait()
+keyboard.add_hotkey("ctrl+shift+alt+space", activated)
+keyboard.wait()
