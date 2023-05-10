@@ -1,6 +1,8 @@
 # Notion App
 import datetime
 import json
+import multiprocessing
+
 import requests
 import os
 import sys
@@ -9,6 +11,8 @@ import pyautogui
 import keyboard
 from google_calendar import get_google_calendar_events
 from multiprocessing import Process
+from multiprocessing import freeze_support
+import multiprocessing
 
 # For bundling with pyinstaller into an exe
 bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
@@ -397,19 +401,16 @@ def sync_google_calendar():
     return response
 
 
-periodic = True
-
-
-def run_periodically():
+def run_periodically(global_var):
     while True:
+        periodic = global_var.value
         if periodic:
             sync_to_do_list_and_task_list()
-            time.sleep(20)
+        time.sleep(20)
 
 
-def switch_periodic_function():
-    global periodic
-    periodic = not periodic
+def switch_periodic_function(global_var):
+    global_var.value = not global_var.value
 
 
 def specific_functions():
@@ -432,7 +433,7 @@ Below are the specific functions available to execute:
             specific_functions()
 
 
-def controller():
+def controller(global_var):
     controller_dict = {"1": sync_google_calendar, "2": daily_reset, "3": specific_functions,
                        "4": switch_periodic_function}
     print(
@@ -441,36 +442,45 @@ Below are the shortcuts corresponding with each action:
     Sync google calendar with calendar view: 1
     Daily update: 2
     Specific functions: 3
-    Switch periodic functions {not periodic}: 4
+    Switch periodic functions to {not global_var.value}: 4
         '''
     )
-
+    sys.stdin = open(0)
     choice = input("Please enter your choice: ")
     if choice in controller_dict.keys():
-        controller_dict[choice]()
+        if choice == "r":
+            controller_dict[choice](global_var)
+        else:
+            controller_dict[choice]()
     else:
         if choice != "q":
             print("Invalid entry")
-            controller()
+            controller(global_var)
 
 
-def activated():
+def activated(global_var):
     win = pyautogui.getWindowsWithTitle('Notion Automation App')[0]
     win.maximize()
-    controller()
+    controller(global_var)
     print("finished")
+    time.sleep(1.5)
     win.minimize()
 
 
-def wait_for_hotkey():
-    keyboard.add_hotkey("ctrl+shift+alt+space", activated)
+def wait_for_hotkey(global_var):
+    win = pyautogui.getWindowsWithTitle('Notion Automation App')[0]
+    win.maximize()
+    win.minimize()
+    keyboard.add_hotkey("ctrl+shift+alt+space", activated, args=(global_var,))
     keyboard.wait()
 
 
 if __name__ == '__main__':
-    p1 = Process(target=wait_for_hotkey)
+    freeze_support()
+    variable = multiprocessing.Value("i", True)
+    p1 = Process(target=wait_for_hotkey, args=(variable,))
     p1.start()
-    p2 = Process(target=run_periodically)
+    p2 = Process(target=run_periodically, args=(variable,))
     p2.start()
     p1.join()
     p2.join()
