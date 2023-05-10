@@ -403,8 +403,7 @@ def sync_google_calendar():
 
 def run_periodically(global_var):
     while True:
-        periodic = global_var.value
-        if periodic:
+        if global_var.value:
             sync_to_do_list_and_task_list()
         time.sleep(20)
 
@@ -448,7 +447,7 @@ Below are the shortcuts corresponding with each action:
     sys.stdin = open(0)
     choice = input("Please enter your choice: ")
     if choice in controller_dict.keys():
-        if choice == "r":
+        if choice == "4":
             controller_dict[choice](global_var)
         else:
             controller_dict[choice]()
