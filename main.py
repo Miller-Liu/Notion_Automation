@@ -4,9 +4,11 @@ import json
 import requests
 import os
 import sys
+import time
 import pyautogui
 import keyboard
 from google_calendar import get_google_calendar_events
+from multiprocessing import Process
 
 # For bundling with pyinstaller into an exe
 bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
@@ -272,15 +274,26 @@ def add_event_to_to_do_list_tomorrow(event_data):
 def sync_to_do_list_and_task_list():
     to_do_list = get_to_do_list()
     task_list = get_task_list()
+    to_do_list_id = {to_do_list.to_do[i][0]: to_do_list.ids[i] for i in range(len(to_do_list.to_do))}
+    to_do_list_status = {to_do_list.to_do[i][0]: to_do_list.to_do[i][1] for i in range(len(to_do_list.to_do))}
     to_do_list = [item[0] for item in to_do_list.to_do]
+    task_list_id = {item.name: item.id for item in task_list}
+    task_list_status = {item.name: item.status for item in task_list}
     task_list = [item.name for item in task_list]
     temp_boolean = True
+    # print(to_do_list_id, to_do_list_status, task_list_id, task_list_status)
     for to_do_item in to_do_list:
         if to_do_item not in task_list:
             temp_boolean = False
             process_result(add_event_to_task_list(
                 {"Status": {"select": {"name": "To Do"}},
                  "Name": {"title": [{"text": {"content": to_do_item}, "plain_text": to_do_item}]}}))
+        else:
+            if to_do_list_status[to_do_item] == True and \
+                    (task_list_status[to_do_item] == "To Do" or task_list_status[to_do_item] == "Doing"):
+                url = f"https://api.notion.com/v1/pages/{task_list_id[to_do_item]}"
+                response = requests.patch(url, json={"properties": {"Status": {"select": {"name": "Done 🙌"}}}},
+                                          headers=headers)
     if temp_boolean:
         print("All items in to-do list is in task list")
     temp_boolean = True
@@ -289,6 +302,12 @@ def sync_to_do_list_and_task_list():
             temp_boolean = False
             process_result(add_event_to_to_do_list(
                 {"to_do": {"text": [{"text": {"content": task_item}, "plain_text": task_item}]}}))
+        else:
+            if task_list_status[task_item] == "Done 🙌" and to_do_list_status[task_item]== False:
+                url = f"https://api.notion.com/v1/blocks/{to_do_list_id[task_item]}"
+                response = requests.delete(url, headers=headers)
+                process_result(add_event_to_to_do_list(
+                    {"to_do": {"checked": True, "text": [{"text": {"content": task_item}, "plain_text": task_item}]}}))
     if temp_boolean:
         print("All items in task-list is in to-do list")
 
@@ -378,23 +397,51 @@ def sync_google_calendar():
     return response
 
 
-def sync_all():
-    add_events_to_timeline_view()
-    sync_to_do_list_and_task_list()
-    add_to_do_list_to_timeline()
+periodic = True
+
+
+def run_periodically():
+    while True:
+        if periodic:
+            sync_to_do_list_and_task_list()
+            time.sleep(20)
+
+
+def switch_periodic_function():
+    global periodic
+    periodic = not periodic
+
+
+def specific_functions():
+    specific_functions_dict = {"1": add_events_to_timeline_view, "2": sync_to_do_list_and_task_list,
+                               "3": add_to_do_list_to_timeline}
+    print(
+        f'''
+Below are the specific functions available to execute:
+    Add calendar events to timeline view: 1
+    Sync to do list and to do database: 2
+    Add to do list items to timeline view: 3
+        '''
+    )
+    specific_functions_choice = input("Please enter your choice: ")
+    if specific_functions_choice in specific_functions_dict.keys():
+        specific_functions_dict[specific_functions_choice]()
+    else:
+        if specific_functions_choice != "q":
+            print("Invalid entry")
+            specific_functions()
 
 
 def controller():
-    controller_dict = {"1": sync_google_calendar, "2": daily_reset, "3": add_events_to_timeline_view,
-                       "4": sync_to_do_list_and_task_list, "5": add_to_do_list_to_timeline}
+    controller_dict = {"1": sync_google_calendar, "2": daily_reset, "3": specific_functions,
+                       "4": switch_periodic_function}
     print(
-        '''
+        f'''
 Below are the shortcuts corresponding with each action:
     Sync google calendar with calendar view: 1
     Daily update: 2
-    Add calendar events to timeline events: 3
-    Sync to do lists: 4
-    Add to do items to timeline view: 5
+    Specific functions: 3
+    Switch periodic functions {not periodic}: 4
         '''
     )
 
@@ -415,5 +462,16 @@ def activated():
     win.minimize()
 
 
-keyboard.add_hotkey("ctrl+shift+alt+space", activated)
-keyboard.wait()
+def wait_for_hotkey():
+    keyboard.add_hotkey("ctrl+shift+alt+space", activated)
+    keyboard.wait()
+
+
+if __name__ == '__main__':
+    p1 = Process(target=wait_for_hotkey)
+    p1.start()
+    p2 = Process(target=run_periodically)
+    p2.start()
+    p1.join()
+    p2.join()
+
