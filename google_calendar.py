@@ -15,7 +15,6 @@ bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__))
 token_path = os.path.abspath(os.path.join(bundle_dir, 'token.json'))
 credentials_path = os.path.abspath(os.path.join(bundle_dir, 'credentials.json'))
 
-
 def get_google_calendar_events():
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
@@ -58,3 +57,8 @@ def get_google_calendar_events():
         return events
     except HttpError as error:
         print('An error occurred: %s' % error)
+
+
+def remove_token_file():
+    if os.path.exists(token_path):
+        os.remove(token_path)

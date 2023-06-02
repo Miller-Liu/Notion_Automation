@@ -9,6 +9,7 @@ import time
 import pyautogui
 import keyboard
 from google_calendar import get_google_calendar_events
+from google_calendar import remove_token_file
 from multiprocessing import Process
 from multiprocessing import freeze_support
 import multiprocessing
@@ -88,11 +89,8 @@ def jsonify(text):
 
 
 def process_result(result):
-    print(result)
     if "object" in result.keys():
-        if result["object"] != "error":
-            print(f"{result['object']} added successfully")
-        else:
+        if result["object"] == "error":
             print(f"ERROR: {result}")
     else:
         print(f"ERROR: {result}")
@@ -448,9 +446,8 @@ def fun_home_page(last_time):
 def run_periodically(global_var, last_time):
     while True:
         if global_var.value:
-            sync_to_do_list_and_task_list()
             last_time = fun_home_page(last_time)
-        time.sleep(20)
+        time.sleep(60)
 
 
 def switch_periodic_function(global_var):
@@ -470,6 +467,8 @@ Below are the specific functions available to execute:
     )
     specific_functions_choice = input("Please enter your choice: ")
     if specific_functions_choice in specific_functions_dict.keys():
+        win = pyautogui.getWindowsWithTitle('Notion Automation App')[0]
+        win.minimize()
         specific_functions_dict[specific_functions_choice]()
     else:
         if specific_functions_choice != "q":
@@ -477,9 +476,14 @@ Below are the specific functions available to execute:
             specific_functions()
 
 
+def bug_fix():
+    remove_token_file()
+    get_google_calendar_events()
+
+
 def controller(global_var):
     controller_dict = {"1": sync_google_calendar, "2": daily_reset, "3": specific_functions,
-                       "4": switch_periodic_function}
+                       "4": switch_periodic_function, "5": bug_fix}
     print(
         f'''
 Below are the shortcuts corresponding with each action:
@@ -487,11 +491,15 @@ Below are the shortcuts corresponding with each action:
     Daily update: 2
     Specific functions: 3
     Switch periodic functions to {not global_var.value}: 4
+    Fix if #1 doesn't work: 5
         '''
     )
     sys.stdin = open(0)
     choice = input("Please enter your choice: ")
     if choice in controller_dict.keys():
+        if choice != "3":
+            win = pyautogui.getWindowsWithTitle('Notion Automation App')[0]
+            win.minimize()
         if choice == "4":
             controller_dict[choice](global_var)
         else:
@@ -507,7 +515,8 @@ def activated(global_var):
     win.maximize()
     controller(global_var)
     print("finished")
-    time.sleep(1.5)
+    win.maximize()
+    time.sleep(3)
     win.minimize()
 
 
@@ -532,3 +541,4 @@ if __name__ == '__main__':
 # url = f"https://api.notion.com/v1/blocks/{IMAGE_ID}"
 # response = requests.get(url, headers=headers)
 # print(response.text)
+
