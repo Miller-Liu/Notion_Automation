@@ -1,4 +1,4 @@
-import datetime
+# Functions related to the calendar database in the calendar page
 import requests
 import json
 from Calendar_Page.Google_Calendar import *
@@ -70,7 +70,7 @@ def sync_google_calendar(IDS):
             pages.append((item["properties"]["Name"]["title"][0]["plain_text"],
                           item["properties"]["Time"]["date"]["start"][:10]))
     # print(pages)
-    calendar = get_google_calendar_events()
+    calendar = get_google_calendar_events(IDS)
     holiday = []
     for calendar_event in calendar:
         if calendar_event[-1] != "Holiday":
@@ -97,6 +97,6 @@ def sync_google_calendar(IDS):
     return holiday
 
 
-def bug_fix():
+def bug_fix(IDS):
     remove_token_file()
-    get_google_calendar_events()
+    get_google_calendar_events(IDS)

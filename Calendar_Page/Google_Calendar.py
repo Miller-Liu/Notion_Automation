@@ -1,3 +1,4 @@
+# All things related to the google calendar api
 from __future__ import print_function
 
 import datetime
@@ -15,7 +16,8 @@ bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(os.path.di
 token_path = os.path.abspath(os.path.join(bundle_dir, 'token.json'))
 credentials_path = os.path.abspath(os.path.join(bundle_dir, 'credentials.json'))
 
-def get_google_calendar_events():
+
+def get_google_calendar_events(IDS):
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -36,7 +38,7 @@ def get_google_calendar_events():
 
     try:
         service = build('calendar', 'v3', credentials=creds, static_discovery=False)
-        api = "AIzaSyB_kjS06TcX6mSHvEbCwhljUQLiaf0HkF8"
+        api = IDS["google_api"]
         # get list of calendars
         '''
         calendar_list = service.calendarList().list().execute()
