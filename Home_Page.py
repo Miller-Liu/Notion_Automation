@@ -3,7 +3,7 @@ import requests
 
 
 def fun_home_page(last_time, IDS):
-    TOKEN, HOME_ID, HOME_IMAGE_ID = IDS["id"], IDS["database"]["Home"], IDS["database"]["Home_Image"]
+    TOKEN, HOME_ID, HOME_IMAGE_ID = IDS["id"], IDS["home_page"]["page_id"], IDS["home_page"]["image_id"]
     headers = {
         'Authorization': f'Bearer {TOKEN}',
         "accept": "application/json",
