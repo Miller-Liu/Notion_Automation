@@ -1,11 +1,6 @@
 import datetime
 import requests
 
-import json
-
-file = open("SECRET.json")
-data = json.load(file)
-
 
 def fun_home_page(last_time, IDS):
     TOKEN, HOME_ID, HOME_IMAGE_ID = IDS["id"], IDS["database"]["Home"], IDS["database"]["Home_Image"]
@@ -53,6 +48,3 @@ def fun_home_page(last_time, IDS):
         change_home_cover_image(3)
         return 3
     return last_time
-
-
-print(fun_home_page(0, data))
