@@ -33,7 +33,7 @@ TO_DO_ID = DATABASE_IDs["to-do"]
 TASK_LIST_ID = DATABASE_IDs["to-do-database"]
 TO_DO_TOMORROW_ID = DATABASE_IDs["to-do-tomorrow"]
 HOME_ID = DATABASE_IDs["Home"]
-IMAGE_ID = DATABASE_IDs["Image"]
+IMAGE_ID = DATABASE_IDs["Home_Image"]
 
 file.close()
 
