@@ -1,7 +1,7 @@
 # Functions related to the calendar database in the calendar page
 import requests
 import json
-from Calendar_Page.Google_Calendar import *
+from Productivity.Google_Calendar import *
 
 
 class CalendarDatabasePage:
