@@ -24,7 +24,7 @@ class TimelineDatabasePage:
 
 
 def get_timeline_database_items_today(IDS):
-    TOKEN, TIMELINE_ID = IDS["id"], IDS["task_list_page"]["timeline_database"]
+    TOKEN, TIMELINE_ID = IDS["id"], IDS["task_list_page"]["timeline-database"]
     headers = {
         'Authorization': f'Bearer {TOKEN}',
         "accept": "application/json",
@@ -53,7 +53,7 @@ def get_timeline_database_items_today(IDS):
 
 
 def add_event_to_timeline_view(event_data, IDS):
-    TOKEN, TIMELINE_ID = IDS["id"], IDS["task_list_page"]["timeline_database"]
+    TOKEN, TIMELINE_ID = IDS["id"], IDS["task_list_page"]["timeline-database"]
     headers = {
         'Authorization': f'Bearer {TOKEN}',
         "accept": "application/json",

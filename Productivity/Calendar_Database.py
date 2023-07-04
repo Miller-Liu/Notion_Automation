@@ -23,7 +23,7 @@ class CalendarDatabasePage:
 
 
 def get_calendar_database_items_today(IDS):
-    TOKEN, CALENDAR_ID = IDS["id"], IDS["calendar_page"]["calendar_database"]
+    TOKEN, CALENDAR_ID = IDS["id"], IDS["calendar_page"]["calendar-database"]
     headers = {
         'Authorization': f'Bearer {TOKEN}',
         "accept": "application/json",
@@ -44,7 +44,7 @@ def get_calendar_database_items_today(IDS):
 
 
 def sync_google_calendar(IDS):
-    TOKEN, CALENDAR_ID = IDS["id"], IDS["calendar_page"]["calendar_database"]
+    TOKEN, CALENDAR_ID = IDS["id"], IDS["calendar_page"]["calendar-database"]
     headers = {
         'Authorization': f'Bearer {TOKEN}',
         "accept": "application/json",
