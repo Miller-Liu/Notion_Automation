@@ -58,7 +58,7 @@ def sync_google_calendar(IDS):
     begin_date = begin_date.strftime('%Y-%m-%d')
     end_date = end_date.strftime('%Y-%m-%d')
     url = f"https://api.notion.com/v1/databases/{CALENDAR_ID}/query"
-    print(begin_date, end_date)
+    # print(begin_date, end_date)
     payload = {"filter": {"and": [{"property": "Date", "date": {"on_or_after": f"{begin_date}"}},
                                   {"property": "Date", "date": {"before": f"{end_date}"}}]},
                "sorts": [{"property": "Time", "direction": "ascending"}]}

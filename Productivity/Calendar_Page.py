@@ -1,6 +1,10 @@
 # Control center for everything in Calendar Page
+import pyautogui
+
 from Productivity.Calendar_Database import *
 from Productivity.Planner_Database import *
+from Productivity.Reminder_Block import *
+from Productivity.Reminder_Database import *
 from Productivity.Task_List_Database import *
 from Productivity.Timeline_Database import *
 from Productivity.To_Do_Lists import *
@@ -154,3 +158,32 @@ def daily_reset(IDS):
         update_timeline_from_calendar(IDS)
         update_timeline_from_planner(IDS)
         sync_to_do_list_and_task_list(IDS)
+        change_reminder_block_content(IDS, get_upcoming_reminders(IDS))
+
+
+def productivity_functions(IDS):
+    function_dict = {"1": update_timeline_from_calendar, "2": update_timeline_from_planner,
+                     "3": change_reminder_block_content, "4": sync_to_do_list_and_task_list,
+                     "5": daily_reset, "6": sync_google_calendar, "7": bug_fix}
+    print(
+        f'''
+Productivity functions:
+    Update timeline database from calendar: 1
+    Update timeline database from planner: 2
+    Update reminder block: 3
+    Sync to do list and task list database: 4
+    Daily reset: 5
+    Sync google calendar with calendar view: 6
+    Bug fix: 7
+'''
+    )
+    choice = input("Please enter your choice: ")
+    if choice in function_dict.keys():
+        pyautogui.getWindowsWithTitle('Notion Automation App')[0].minimize()
+        if choice == 3:
+            function_dict[3](IDS, get_upcoming_reminders(IDS))
+        else:
+            function_dict[choice](IDS)
+    else:
+        if choice != "q":
+            print("Invalid entry")
