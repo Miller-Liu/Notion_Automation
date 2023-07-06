@@ -35,6 +35,7 @@ Below are the shortcuts corresponding with each function:
     Fix if #1 doesn't work: 2
     Daily update: 3
     Switch periodic functions to {not global_var.value}: 4
+    Specific functions: 5
         '''
     )
     sys.stdin = open(0)
