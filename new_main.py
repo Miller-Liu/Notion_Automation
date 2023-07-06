@@ -10,7 +10,11 @@ from multiprocessing import Process
 from multiprocessing import freeze_support
 import multiprocessing
 
-file = open("IDS.json")
+bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
+path = os.path.abspath(os.path.join(bundle_dir, 'SECRET.json'))
+file = open(path)
+
+# file = open("IDS.json")
 data = json.load(file)
 
 
