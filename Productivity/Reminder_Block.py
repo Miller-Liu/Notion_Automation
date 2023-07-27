@@ -10,7 +10,7 @@ def change_reminder_block_content(IDS, event_data):
         'Content-Type': 'application/json',
         'Notion-Version': '2021-08-16'
     }
-    if len(event_data[0]) != 0 and len(event_data[1]) != 0 and len(event_data[2]) != 0:
+    if len(event_data[0]) != 0 or len(event_data[1]) != 0 or len(event_data[2]) != 0:
         text = "Reminders: "
         if len(event_data[0]) != 0:
             text += "\n\tToday:\t\t"

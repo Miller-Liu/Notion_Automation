@@ -29,9 +29,27 @@ def switch_periodic_function(global_var):
     global_var.value = not global_var.value
 
 
+def specific_functions_controller(IDS):
+    controller_dict = {"2": productivity_functions}
+    print(
+        f'''
+Below are the shortcuts corresponding with each function:
+    Home page functions: 1
+    Productivity functions: 2
+        '''
+    )
+    choice = input("Please enter your choice: ")
+    if choice in controller_dict.keys():
+        controller_dict[choice](IDS)
+    else:
+        if choice != "q":
+            print("Invalid entry")
+            specific_functions_controller(IDS)
+
+
 def controller(global_var, IDS):
     controller_dict = {"1": sync_google_calendar, "2": bug_fix, "3": daily_reset,
-                       "4": switch_periodic_function}
+                       "4": switch_periodic_function, "5": specific_functions_controller}
     print(
         f'''
 Below are the shortcuts corresponding with each function:
@@ -45,8 +63,12 @@ Below are the shortcuts corresponding with each function:
     sys.stdin = open(0)
     choice = input("Please enter your choice: ")
     if choice in controller_dict.keys():
-        pyautogui.getWindowsWithTitle('Notion Automation App')[0].minimize()
-        if choice == "4":
+        if choice != "5" and choice != "1":
+            pyautogui.getWindowsWithTitle('Notion Automation App')[0].minimize()
+        if choice == "1":
+            months_from_now = int(input("Please enter how many months from now: "))
+            controller_dict[choice](IDS, months_from_now)
+        elif choice == "4":
             controller_dict[choice](global_var)
         else:
             controller_dict[choice](IDS)

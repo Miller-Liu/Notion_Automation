@@ -17,7 +17,7 @@ token_path = os.path.abspath(os.path.join(bundle_dir, 'token.json'))
 credentials_path = os.path.abspath(os.path.join(bundle_dir, 'credentials.json'))
 
 
-def get_google_calendar_events(IDS):
+def get_google_calendar_events(IDS, month_from_now):
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -47,6 +47,9 @@ def get_google_calendar_events(IDS):
         '''
         today = datetime.datetime.today()
         begin_date = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        for i in range(month_from_now):
+            begin_date = begin_date + datetime.timedelta(days=32)
+            begin_date = begin_date.replace(days=1)
         end_date = begin_date + datetime.timedelta(days=32)
         end_date = end_date.replace(day=1).astimezone().isoformat()
         begin_date = begin_date.astimezone().isoformat()
@@ -81,3 +84,5 @@ def get_google_calendar_events(IDS):
 def remove_token_file():
     if os.path.exists(token_path):
         os.remove(token_path)
+
+

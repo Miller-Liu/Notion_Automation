@@ -179,9 +179,13 @@ Productivity functions:
     )
     choice = input("Please enter your choice: ")
     if choice in function_dict.keys():
-        pyautogui.getWindowsWithTitle('Notion Automation App')[0].minimize()
-        if choice == 3:
-            function_dict[3](IDS, get_upcoming_reminders(IDS))
+        if choice != "6":
+            pyautogui.getWindowsWithTitle('Notion Automation App')[0].minimize()
+        if choice == "3":
+            function_dict[choice](IDS, get_upcoming_reminders(IDS))
+        elif choice == "6":
+            months_from_now = int(input("Please enter how many months from now: "))
+            function_dict[choice](IDS, months_from_now)
         else:
             function_dict[choice](IDS)
     else:

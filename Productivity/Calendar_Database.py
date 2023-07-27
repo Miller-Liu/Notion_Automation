@@ -43,7 +43,7 @@ def get_calendar_database_items_today(IDS):
     return pages
 
 
-def sync_google_calendar(IDS):
+def sync_google_calendar(IDS, months_from_now):
     TOKEN, CALENDAR_ID = IDS["id"], IDS["calendar_page"]["calendar-database"]
     headers = {
         'Authorization': f'Bearer {TOKEN}',
@@ -65,12 +65,13 @@ def sync_google_calendar(IDS):
     response = requests.post(url, json=payload, headers=headers)
     response = json.loads(response.text)
     pages = []
+    print(response)
     for item in response["results"]:
         if len(item["properties"]["Name"]["title"]) == 1:
             pages.append((item["properties"]["Name"]["title"][0]["plain_text"],
                           item["properties"]["Time"]["date"]["start"][:10]))
     # print(pages)
-    calendar = get_google_calendar_events(IDS)
+    calendar = get_google_calendar_events(IDS, months_from_now)
     holiday = []
     for calendar_event in calendar:
         if calendar_event[-1] != "Holiday":
@@ -99,4 +100,6 @@ def sync_google_calendar(IDS):
 
 def bug_fix(IDS):
     remove_token_file()
-    get_google_calendar_events(IDS)
+    get_google_calendar_events(IDS, 0)
+
+
