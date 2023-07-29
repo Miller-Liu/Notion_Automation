@@ -48,15 +48,15 @@ Below are the shortcuts corresponding with each function:
 
 
 def controller(global_var, IDS):
-    controller_dict = {"1": sync_google_calendar, "2": bug_fix, "3": daily_reset,
-                       "4": switch_periodic_function, "5": specific_functions_controller}
+    controller_dict = {"1": sync_google_calendar, "2": daily_reset, "3": switch_periodic_function,
+                       "4": sync_to_do_list_and_task_list, "5": specific_functions_controller}
     print(
         f'''
 Below are the shortcuts corresponding with each function:
     Sync google calendar with calendar view: 1
-    Fix if #1 doesn't work: 2
-    Daily update: 3
-    Switch periodic functions to {not global_var.value}: 4
+    Daily update: 2
+    Switch periodic functions to {not global_var.value}: 3
+    Sync to do list and task list database: 4
     Specific functions: 5
         '''
     )
@@ -68,7 +68,7 @@ Below are the shortcuts corresponding with each function:
         if choice == "1":
             months_from_now = int(input("Please enter how many months from now: "))
             controller_dict[choice](IDS, months_from_now)
-        elif choice == "4":
+        elif choice == "3":
             controller_dict[choice](global_var)
         else:
             controller_dict[choice](IDS)
@@ -86,6 +86,7 @@ def activated(global_var, IDS):
     win.maximize()
     time.sleep(3)
     win.minimize()
+    os.system("cls")
 
 
 def wait_for_hotkey(global_var, IDS):
@@ -101,7 +102,7 @@ if __name__ == '__main__':
     variable = multiprocessing.Value("i", True)
     p1 = Process(target=wait_for_hotkey, args=(variable, data, ))
     p1.start()
-    p2 = Process(target=run_periodically, args=(variable, 0, data, ))
+    p2 = Process(target=run_periodically, args=(variable, -1, data, ))
     p2.start()
     p1.join()
     p2.join()

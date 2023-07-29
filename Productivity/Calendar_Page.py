@@ -164,7 +164,7 @@ def daily_reset(IDS):
 def productivity_functions(IDS):
     function_dict = {"1": update_timeline_from_calendar, "2": update_timeline_from_planner,
                      "3": change_reminder_block_content, "4": sync_to_do_list_and_task_list,
-                     "5": daily_reset, "6": sync_google_calendar, "7": bug_fix}
+                     "5": daily_reset, "6": sync_google_calendar}
     print(
         f'''
 Productivity functions:
@@ -174,7 +174,6 @@ Productivity functions:
     Sync to do list and task list database: 4
     Daily reset: 5
     Sync google calendar with calendar view: 6
-    Bug fix: 7
 '''
     )
     choice = input("Please enter your choice: ")

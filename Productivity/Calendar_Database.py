@@ -64,37 +64,41 @@ def sync_google_calendar(IDS, months_from_now):
                "sorts": [{"property": "Time", "direction": "ascending"}]}
     response = requests.post(url, json=payload, headers=headers)
     response = json.loads(response.text)
+
+    # pages array is to check what events are synced already by using name and start time
     pages = []
-    print(response)
+    # print(response)
     for item in response["results"]:
         if len(item["properties"]["Name"]["title"]) == 1:
             pages.append((item["properties"]["Name"]["title"][0]["plain_text"],
                           item["properties"]["Time"]["date"]["start"][:10]))
-    # print(pages)
     calendar = get_google_calendar_events(IDS, months_from_now)
     holiday = []
-    for calendar_event in calendar:
-        if calendar_event[-1] != "Holiday":
-            temp = True
-            # print(calendar_event)
-            for event in pages:
-                if calendar_event[0] == event[0] and calendar_event[1][:10] == calendar_event[2][:10] == event[1]:
-                    temp = False
-                    break
-            if not temp:
-                print(f"{calendar_event[0]} is already in calendar")
-            else:
-                print(f"{calendar_event[0]} added to calendar")
-                url = "https://api.notion.com/v1/pages"
-                payload = {"parent": {"database_id": CALENDAR_ID},
-                           "properties": {"Date": {"date": {"start": calendar_event[1][:10]}},
-                                          "Time": {"date": {"start": calendar_event[1],
-                                                            "end": calendar_event[2]}}, "Name": {
-                                   "title": [{"text": {"content": calendar_event[0]}, "plain_text": calendar_event[0]}]}}}
-                response = requests.post(url, json=payload, headers=headers)
-                response = json.loads(response.text)
-        if calendar_event[-1] == "Holiday":
-            holiday.append(calendar_event)
+    if calendar:
+        for calendar_event in calendar:
+            if calendar_event[-1] != "Holiday":
+                temp = True
+                # print(calendar_event)
+                for event in pages:
+                    if calendar_event[0] == event[0] and calendar_event[1][:10] == calendar_event[2][:10] == event[1]:
+                        temp = False
+                        break
+                if not temp:
+                    print(f"{calendar_event[0]} is already in calendar")
+                else:
+                    print(f"{calendar_event[0]} added to calendar")
+                    url = "https://api.notion.com/v1/pages"
+                    payload = {"parent": {"database_id": CALENDAR_ID},
+                               "properties": {"Date": {"date": {"start": calendar_event[1][:10]}},
+                                              "Time": {"date": {"start": calendar_event[1],
+                                                                "end": calendar_event[2]}}, "Name": {
+                                       "title": [{"text": {"content": calendar_event[0]}, "plain_text": calendar_event[0]}]}}}
+                    response = requests.post(url, json=payload, headers=headers)
+                    response = json.loads(response.text)
+            if calendar_event[-1] == "Holiday":
+                holiday.append(calendar_event)
+    else:
+        print("No events in this month")
     return holiday
 
 
