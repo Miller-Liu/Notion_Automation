@@ -50,7 +50,7 @@ def get_google_calendar_events(IDS, month_from_now):
             begin_date = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             for i in range(month_from_now):
                 begin_date = begin_date + datetime.timedelta(days=32)
-                begin_date = begin_date.replace(days=1)
+                begin_date = begin_date.replace(day=1)
             end_date = begin_date + datetime.timedelta(days=32)
             end_date = end_date.replace(day=1).astimezone().isoformat()
             begin_date = begin_date.astimezone().isoformat()
@@ -66,9 +66,14 @@ def get_google_calendar_events(IDS, month_from_now):
                                                           timeMin=begin_date, timeMax=end_date,
                                                           singleEvents=True).execute()
                     for event in events_result["items"]:
-                        events.append(
-                            [event["summary"], event["start"]["dateTime"], event["end"]["dateTime"],
-                             calendar_list_entry['summary']])
+                        try:
+                            events.append(
+                                [event["summary"], event["start"]["dateTime"], event["end"]["dateTime"], event["description"],
+                                 calendar_list_entry['summary']])
+                        except KeyError:
+                            events.append(
+                                [event["summary"], event["start"]["dateTime"], event["end"]["dateTime"], "",
+                                 calendar_list_entry['summary']])
             events_result = service.events().list(key=api, calendarId="en.usa#holiday@group.v.calendar.google.com",
                                                   orderBy='startTime',
                                                   timeMin=begin_date, timeMax=end_date, singleEvents=True).execute()

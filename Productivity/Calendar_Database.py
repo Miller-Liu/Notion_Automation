@@ -53,6 +53,9 @@ def sync_google_calendar(IDS, months_from_now):
     }
     today = datetime.datetime.today()
     begin_date = today.replace(day=1)
+    for i in range(months_from_now):
+        begin_date = begin_date + datetime.timedelta(days=32)
+        begin_date = begin_date.replace(day=1)
     end_date = begin_date + datetime.timedelta(days=32)
     end_date = end_date.replace(day=1)
     begin_date = begin_date.strftime('%Y-%m-%d')
@@ -90,9 +93,9 @@ def sync_google_calendar(IDS, months_from_now):
                     url = "https://api.notion.com/v1/pages"
                     payload = {"parent": {"database_id": CALENDAR_ID},
                                "properties": {"Date": {"date": {"start": calendar_event[1][:10]}},
-                                              "Time": {"date": {"start": calendar_event[1],
-                                                                "end": calendar_event[2]}}, "Name": {
-                                       "title": [{"text": {"content": calendar_event[0]}, "plain_text": calendar_event[0]}]}}}
+                                              "Time": {"date": {"start": calendar_event[1], "end": calendar_event[2]}},
+                                              "Description": {"rich_text": [{"text": {"content": calendar_event[3]}}]},
+                                              "Name": {"title": [{"text": {"content": calendar_event[0]}, "plain_text": calendar_event[0]}]}}}
                     response = requests.post(url, json=payload, headers=headers)
                     response = json.loads(response.text)
             if calendar_event[-1] == "Holiday":
