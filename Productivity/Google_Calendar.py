@@ -59,7 +59,7 @@ def get_google_calendar_events(IDS, month_from_now):
             calendar_list = service.calendarList().list().execute()
             for calendar_list_entry in calendar_list['items']:
                 if calendar_list_entry['summary'] in \
-                        ['millerliu.work@gmail.com', 'Berkeley']:
+                        ['millerliu.work@gmail.com', 'Berkeley', 'Miller Berkeley Schedule']:
                     events_result = service.events().list(key=api,
                                                           calendarId=calendar_list_entry['id'],
                                                           orderBy='startTime',
